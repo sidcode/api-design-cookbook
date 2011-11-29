@@ -8,10 +8,18 @@
           specStatus: "ED",
           shortName:  "api-design",
           editors: [
-                {   name:       "Robin Berjon",
-                    url:        "http://berjon.com/",
-                    company:    "Robineko",
-                    companyURL: "http://robineko.com/" }
+            {
+              name:       "Robin Berjon",
+              url:        "http://berjon.com/",
+              company:    "Robineko",
+              companyURL: "http://robineko.com/"
+            },
+            {
+              name:       "Rick Waldron",
+              url:        "http://github.com/rwldrn/",
+              company:    "Bocoup, LLC",
+              companyURL: "http://bocoup.com/"
+            },
           ],
           edDraftURI:   "http://scriptlib-cg.github.com/api-design-cookbook/",
           copyrightStart: 2011,
@@ -23,7 +31,7 @@
           wg:           "Device APIs Working Group",
           wgURI:        "http://www.w3.org/2009/dap/",
           wgPublicList: "public-device-apis",
-          wgPatentURI:  "http://www.w3.org/2004/01/pp-impl/43696/status",
+          wgPatentURI:  "http://www.w3.org/2004/01/pp-impl/43696/status"
       };
     </script>
     <script src='http://respec.specifiction.com/js/profiles/w3c-common.js' class='remove'></script>
@@ -65,7 +73,7 @@
         to constitute a repository of knowledge on this topic. As a guide it does not however attempt to
         supplant editors' brains in making decisions as to how to design their APIs, and consequently one
         must keep in mind that the reasoning behind a specific recommendation is often more important than
-        its result. Furthermore, in some cases there may not be a single consensual best approach, and 
+        its result. Furthermore, in some cases there may not be a single consensual best approach, and
         editors will need to understand the tradeoffs involved in order to pick what works for them amongst
         a set of options.
       </p>
@@ -101,16 +109,16 @@
       </p>
       <pre class='example highlight'>
         navigator.petKitten(
-                function () {
-                    console.log("kitten is purring");
-                }
-            ,   function (err) {
-                    console.log("kitten hates you, because: " + err);
-                }
+          function() {
+            console.log("kitten is purring");
+          },
+          function(err) {
+            console.log("kitten hates you, because: " + err);
+          }
         );
       </pre>
       <p>
-        Downsides of this approach are that it is a little more verbose and does not encourage error handling. It 
+        Downsides of this approach are that it is a little more verbose and does not encourage error handling. It
         also lacks in extensibility since adding new arguments to the method will typically require placing them
         after the optional error handler — making them de facto optional. Likewise, extending it to support not
         just callbacks for success and error but also for other situations that may warrant reporting information
@@ -119,10 +127,9 @@
       </p>
       <p>Another approach is to define new DOM Events that are called when an underlying system changes.</p>
       <pre class='example higlight'>
-	window.addEventListener('kittenpurr', 
-	         function () {
-                    console.log("kitten is purring");	
-	         }, false);
+  window.addEventListener("kittenpurr", function() {
+    console.log("kitten is purring");
+  }, false);
       </pre>
       <p>On one hand, most developers are quite familiar with DOM Events, and they make it easy to have several handlers for a given event.</p>
       <p>On the other hand, using DOM Events for listening to systems that need specific activation (e.g. powering up) are usually not a good idea: <code>addEventListener</code> is supposed to be free from side effects, and associating activation code with it breaks that promise. The [[DeviceOrientation]] specification is as such an <strong>anti-pattern</strong> that should not be replicated. See <a href="http://lists.w3.org/Archives/Public/public-device-apis/2011Nov/0164.html">some discussions on side effects in addEventListener</a>.</p>
@@ -133,9 +140,19 @@
       </p>
       <pre class='example highlight'>
         var kitpet = navigator.openKittenPetting();
-        kitpet.onpurr = function () { console.log("kitten is purring"); };
-        kitpet.ondrool = function () { console.log("kitten is now drooling"); };
-        kitpet.onviciousbite = function () { console.log("kitten bit your hand off"); };
+
+        kitpet.onpurr = function() {
+          console.log("kitten is purring");
+        };
+
+        kitpet.ondrool = function() {
+          console.log("kitten is now drooling");
+        };
+
+        kitpet.onviciousbite = function() {
+          console.log("kitten bit your hand off");
+        };
+
         kitpet.start();
       </pre>
       <p>
@@ -150,10 +167,13 @@
         by as many pieces of information as are needed to capture the success.
       </p>
       <pre class='example highlight'>
-        navigator.petKitten(function (err, state) {
-            if (err) console.log("kitten mauled your face with extreme prejudice");
-            else console.log("kittem manifest joy by " + state);
-        })
+        navigator.petKitten(function(err, state) {
+          if (err) {
+            console.log("kitten mauled your face with extreme prejudice");
+          } else {
+            console.log("kittem manifest joy by " + state);
+          }
+        });
       </pre>
       <p>
         The primary value in this approach is that it puts errors "right there" where they are likely to be handled.
@@ -167,10 +187,17 @@
         more generic and use a slightly different style.
       </p>
       <pre class='example highlight'>
-        navigator.petKitten()
-                 .then(function () { console.log("kitten is purring"); })
-                 .fail(function () { console.log("kitten bit your hand off"); })
-                 .run();
+        var promise = navigator.petKitten();
+
+        promise.then(function() {
+
+          console.log("kitten is purring");
+
+        }).fail(function() {
+
+          console.log("kitten bit your hand off");
+
+        }).run();
       </pre>
       <p>
         There is elegance and flexibility in promises, but to date they are used in no Web specification.
@@ -187,27 +214,33 @@
       <p>
         Interfaces regularly require constant identifiers. You have a node and you want to know if it's
         an element or a comment. You have a message and you want to know if it's email or SMS. That much makes
-        sense. What does not make sense is insisting on naming these things with numbers when we could name them 
+        sense. What does not make sense is insisting on naming these things with numbers when we could name them
         with, you know, names.
       </p>
       <p>
         There are several variants in this bad practice. First, is the lovingly terse approach:
       </p>
       <pre class='example highlight'>
-        if (foo.type === 17) doSomething();
+        if (foo.type === 17) {
+          doSomething();
+        }
       </pre>
       <p>
         Then there is the comment you have to paste every time:
       </p>
       <pre class='example highlight'>
         // check if this of the fungible type
-        if (foo.type === 17) doSomething();
+        if (foo.type === 17) {
+          doSomething();
+        }
       </pre>
       <p>
         Or we can have the uselessly long variant:
       </p>
       <pre class='example highlight'>
-        if (foo.type === FooInterface.FUNGIBLE_TYPE) doSomething();
+        if (foo.type === FooInterface.FUNGIBLE_TYPE) {
+          doSomething();
+        }
       </pre>
       <p>
         And there's the meh option:
@@ -215,13 +248,17 @@
       <pre class='example highlight'>
         var isFungible = FooInterface.FUNGIBLE_TYPE;
         // ...
-        if (foo.type === isFungible) doSomething();
+        if (foo.type === isFungible) {
+          doSomething();
+        }
       </pre>
       <p>
         None of the above is as simple, terse, and self-documenting as:
       </p>
       <pre class='example highlight'>
-        if (foo.type === "fungible") doSomething();
+        if (foo.type === "fungible") {
+          doSomething();
+        }
       </pre>
       <p>
         We're not in the 1970s, standardising UNIX system calls. Strings are lightweight enough,
